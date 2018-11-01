@@ -1,0 +1,10 @@
+apply plugin: 'java'
+
+jar {
+    baseName = 'schedulesearch'
+    manifest {
+        attributes(
+            'Main-Class': 'schedulesearch.Main',
+        )
+    }
+}
