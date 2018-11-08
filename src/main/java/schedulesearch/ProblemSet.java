@@ -40,7 +40,7 @@ public class ProblemSet {
     //  B. Constructors
     // =========================================================================
 
-    public ProblemSet(String filename) throws IOException {
+    public ProblemSet(String filename) throws IOException, ParseException {
         FileInputStream in = null;
         try {
             in = new FileInputStream(filename);
@@ -57,38 +57,47 @@ public class ProblemSet {
     //  C. Input parsing
     // =========================================================================
 
-    private void parse(InputStream in) throws IOException {
+    private int line_no;
+
+    private void parse(InputStream in) throws ParseException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
         String line;
-        while ((line = reader.readLine()) != null) {
-            if (current_section == null) {
-                if (line.length() > 0) {
-                    if (line.charAt(line.length() - 1) == ':') {
-                        current_section = makeHandler(line.substring(0, line.length() - 1));
+        line_no = 0;
+        try {
+            while ((line = reader.readLine()) != null) {
+                line_no += 1;
+                if (current_section == null) {
+                    if (line.length() > 0) {
+                        if (line.charAt(line.length() - 1) == ':') {
+                            current_section = makeHandler(line.substring(0, line.length() - 1));
+                        }
+                        else {
+                            throw new ParseException("Expected section name", line_no);
+                        }
                     }
-                    else {
-                        throw new IOException("Expected section name");
-                    }
-                }
-            }
-            else {
-                if (line.length() == 0) {
-                    current_section = null;
                 }
                 else {
-                    current_section.parseLine(line.split("\\s*,\\s*"));
+                    if (line.length() == 0) {
+                        current_section = null;
+                    }
+                    else {
+                        current_section.parseLine(line.trim().split("\\s*,\\s*"));
+                    }
                 }
             }
+        }
+        catch (IOException e) {
+            throw new ParseException(e, line_no);
         }
     }
 
     private interface SectionHandler {
-        void parseLine(String[] elements) throws IOException;
+        void parseLine(String[] elements) throws ParseException;
     }
 
     private SectionHandler current_section = null;
 
-    private SectionHandler makeHandler(String section_name) throws IOException {
+    private SectionHandler makeHandler(String section_name) throws ParseException {
         if (section_name.equalsIgnoreCase("Name")) {
             return (line) -> parseName(line);
         }
@@ -120,7 +129,7 @@ public class ProblemSet {
             return (line) -> parsePartialAssignments(line);
         }
         else {
-            throw new IOException("Unknown section \"" + section_name + "\"");
+            throw new ParseException("Unknown section \"" + section_name + "\"", line_no);
         }
     }
 
@@ -128,21 +137,21 @@ public class ProblemSet {
     //  D. Section handlers
     // =========================================================================
 
-    private void parseName(String[] elements) throws IOException {
+    private void parseName(String[] elements) throws ParseException {
         if (elements.length == 1) {
             if (name == null) {
                 name = elements[0];
             }
             else {
-                throw new IOException("More than one name provided for the schedule");
+                throw new ParseException("More than one name provided for the schedule", line_no);
             }
         }
         else {
-            throw new IOException("Wrong number of elements for the schedule name");
+            throw new ParseException("Wrong number of elements for the schedule name", line_no);
         }
     }
 
-    private void parseCourseSlots(String[] elements) throws IOException {
+    private void parseCourseSlots(String[] elements) throws ParseException {
         if (elements.length == 4) {
             try {
                 Time time = Time.parse(elements[0], elements[1]);
@@ -151,15 +160,15 @@ public class ProblemSet {
                 course_slots.add(new Slot(time, course_max, course_min));
             }
             catch (NumberFormatException e) {
-                throw new IOException("Invalid arguments given for course slot");
+                throw new ParseException("Invalid arguments given for course slot", e, line_no);
             }
         }
         else {
-            throw new IOException("Wrong number of elements for a course slot");
+            throw new ParseException("Wrong number of elements for a course slot", line_no);
         }
     }
 
-    private void parseLabSlots(String[] elements) throws IOException {
+    private void parseLabSlots(String[] elements) throws ParseException {
         if (elements.length == 4) {
             try {
                 Time time = Time.parse(elements[0], elements[1]);
@@ -168,80 +177,80 @@ public class ProblemSet {
                 lab_slots.add(new Slot(time, lab_max, lab_min));
             }
             catch (NumberFormatException e) {
-                throw new IOException("Invalid arguments given for lab slot");
+                throw new ParseException("Invalid arguments given for lab slot", e, line_no);
             }
         }
         else {
-            throw new IOException("Wrong number of elements for a lab slot");
+            throw new ParseException("Wrong number of elements for a lab slot", line_no);
         }
     }
 
-    private void parseCourses(String[] elements) throws IOException {
+    private void parseCourses(String[] elements) throws ParseException {
         if (elements.length == 1) {
             courses.add(elements[0]);
         }
         else {
-            throw new IOException("Wrong number of elements for a course");
+            throw new ParseException("Wrong number of elements for a course", line_no);
         }
     }
 
-    private void parseLabs(String[] elements) throws IOException {
+    private void parseLabs(String[] elements) throws ParseException {
         if (elements.length == 1) {
             labs.add(elements[0]);
         }
         else {
-            throw new IOException("Wrong number of elements for a lab");
+            throw new ParseException("Wrong number of elements for a lab", line_no);
         }
     }
 
-    private void parseNotCompatible(String[] elements) throws IOException {
+    private void parseNotCompatible(String[] elements) throws ParseException {
         if (elements.length == 2) {
             // TODO - parse these into identifiers instead of leaving them as strings
             not_compatible.add(new Pair<String, String>(elements[0], elements[1]));
         }
         else {
-            throw new IOException("Wrong number of elements for a 'not compatible' statement");
+            throw new ParseException("Wrong number of elements for a 'not compatible' statement", line_no);
         }
     }
 
-    private void parseUnwanted(String[] elements) throws IOException {
+    private void parseUnwanted(String[] elements) throws ParseException {
         if (elements.length == 3) {
             Time time = Time.parse(elements[1], elements[2]);
             unwanted.add(new Assignment(time, elements[0]));
         }
         else {
-            throw new IOException("Wrong number of elements for an 'unwanted' statement");
+            throw new ParseException("Wrong number of elements for an 'unwanted' statement", line_no);
         }
     }
 
-    private void parsePreferences(String[] elements) throws IOException {
+    private void parsePreferences(String[] elements) throws ParseException {
         if (elements.length == 4) {
             Time time = Time.parse(elements[0], elements[1]);
             int value = Integer.parseInt(elements[3]);
             preferences.add(new Pair<Assignment, Integer>(new Assignment(time, elements[2]), value));
         }
         else {
-            throw new IOException("Wrong number of elements for a 'preference' statement");
+            throw new ParseException("Wrong number of elements for a 'preference' statement", line_no);
         }
     }
 
-    private void parsePair(String[] elements) throws IOException {
+    private void parsePair(String[] elements) throws ParseException {
         if (elements.length == 2) {
             // TODO - parse these into identifiers instead of leaving them as strings
             pairs.add(new Pair<String, String>(elements[0], elements[1]));
         }
         else {
-            throw new IOException("Wrong number of elements for a 'pair' statement");
+            throw new ParseException("Wrong number of elements for a 'pair' statement", line_no);
         }
     }
 
-    private void parsePartialAssignments(String[] elements) throws IOException {
+    private void parsePartialAssignments(String[] elements) throws ParseException {
         if (elements.length == 3) {
             Time time = Time.parse(elements[1], elements[2]);
             partial_assignments.add(new Assignment(time, elements[0]));
         }
         else {
-            throw new IOException("Wrong number of elements for a 'partial assignments' statement");
+            throw new ParseException("Wrong number of elements for a 'partial assignments' statement", line_no);
         }
     }
 
