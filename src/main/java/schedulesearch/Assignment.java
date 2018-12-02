@@ -9,4 +9,5 @@ public class Assignment {
         this.time = time;
         this.assigned = assigned;
     }
+
 }
