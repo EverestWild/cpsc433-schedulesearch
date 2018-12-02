@@ -40,19 +40,6 @@ public class ProblemSet {
     //  B. Constructors
     // =========================================================================
 
-    public ProblemSet(ProblemSet other) {
-        name = other.name;
-        course_slots.addAll(other.course_slots);
-        lab_slots.addAll(other.lab_slots);
-        courses.addAll(other.courses);
-        labs.addAll(other.labs);
-        not_compatible.addAll(other.not_compatible);
-        unwanted.addAll(other.unwanted);
-        preferences.addAll(other.preferences);
-        pairs.addAll(other.pairs);
-        partial_assignments.addAll(other.partial_assignments);
-    }
-
     public ProblemSet(String filename) throws IOException, ParseException {
         FileInputStream in = null;
         try {
