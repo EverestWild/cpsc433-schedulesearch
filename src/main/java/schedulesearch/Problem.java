@@ -60,8 +60,8 @@ public class Problem {
         int eval = 0;
         for (Assignment assign : assignments) {
             for (Pair<Assignment, Integer> pref : problem_set.preferences) {
-                if (pref.key.time == assign.time && pref.key.assigned != assign.assigned) {
-                    eval += pref.value;
+                if (pref.getKey().time == assign.time && pref.getKey().assigned != assign.assigned) {
+                    eval += pref.getValue();
                 }
             }
         }
@@ -77,20 +77,20 @@ public class Problem {
             Assignment assign_a = null;
             Assignment assign_b = null;
             for (Assignment assign : assignments) {
-                if (assign.assigned == pair.key) {
+                if (assign.assigned == pair.getKey()) {
                     assign_a = assign;
                     if (assign_b != null) {
                         break;
                     }
                 }
-                else if (assign.assigned == pair.value) {
+                else if (assign.assigned == pair.getValue()) {
                     assign_b = assign;
                     if (assign_a != null) {
                         break;
                     }
                 }
             }
-            if (assign_a.time ~= assign_b.time) {
+            if (assign_a.time != assign_b.time) {
                 ++eval;
             }
         }
