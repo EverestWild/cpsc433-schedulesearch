@@ -2,11 +2,11 @@ package schedulesearch;
 
 public class Assignment {
 
-    public Time time;
+    public Slot slot;
     public Course assigned;
 
-    public Assignment(Time time, Course assigned) {
-        this.time = time;
+    public Assignment(Slot slot, Course assigned) {
+        this.slot = slot;
         this.assigned = assigned;
     }
 

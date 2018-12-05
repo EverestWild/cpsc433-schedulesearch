@@ -56,4 +56,18 @@ public class Time {
         return new Time(parsed_day, hour, minute);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        else if (o != null && o instanceof Time) {
+            Time time = (Time) o;
+            return time.day == day && time.hour == hour && time.minute == minute;
+        }
+        else {
+            return false;
+        }
+    }
+
 }

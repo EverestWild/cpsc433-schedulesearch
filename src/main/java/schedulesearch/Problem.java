@@ -33,7 +33,7 @@ public class Problem {
             int filled = 0;
             for (Assignment assign : assignments) {
                 // TODO - also test that this assignment is for a course
-                if (assign.time == slot.time) {
+                if (assign.slot.time == slot.time) {
                     ++filled;
                 }
             }
@@ -45,7 +45,7 @@ public class Problem {
             int filled = 0;
             for (Assignment assign : assignments) {
                 // TODO - also test that this assignment is for a lab
-                if (assign.time == slot.time) {
+                if (assign.slot.time == slot.time) {
                     ++filled;
                 }
             }
@@ -60,7 +60,7 @@ public class Problem {
         int eval = 0;
         for (Assignment assign : assignments) {
             for (Pair<Assignment, Integer> pref : problem_set.preferences) {
-                if (pref.getKey().time == assign.time && pref.getKey().assigned != assign.assigned) {
+                if (pref.getKey().slot.time == assign.slot.time && pref.getKey().assigned != assign.assigned) {
                     eval += pref.getValue();
                 }
             }
@@ -90,7 +90,7 @@ public class Problem {
                     }
                 }
             }
-            if (assign_a.time != assign_b.time) {
+            if (assign_a.slot.time != assign_b.slot.time) {
                 ++eval;
             }
         }

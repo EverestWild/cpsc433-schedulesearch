@@ -63,7 +63,7 @@ public class SetBasedSearch {
 
         Assignment randomClass = validClasses.get(0);
 
-        String swap1 = randomClass.assigned;
+        Course swap1 = randomClass.assigned;
 
         //Create an ArrayList of assignments that are compatible with swap1
         validClasses.clear();
@@ -87,7 +87,7 @@ public class SetBasedSearch {
 
         randomClass = validClasses.get(0);
 
-        String swap2 = randomClass.assigned;
+        Course swap2 = randomClass.assigned;
 
         //Swap the two classes with eachother
         iter = selectedProblem.assignments.iterator();
@@ -158,71 +158,69 @@ public class SetBasedSearch {
     }
 
     public boolean firstValidTest(Assignment currentAssign, Problem selectedProblem){
+        Course current = currentAssign.assigned;
 
         //Don't move classes in the partial assignment
-        Collection<Assignment> partialAssign = selectedProblem.problem_set.partial_assignments;
+        Collection<Pair<Time, Course>> partialAssign = selectedProblem.problem_set.partial_assignments;
 
-        for(Assignment partial : partialAssign){
-            if(currentAssign.assigned == partial.assigned){
+        for(Pair<Time, Course> partial : partialAssign){
+            Course pairCourse = partial.getValue();
+
+            if(current == pairCourse){
                 return false;
             }
         }
 
-        String cpsc813 = "813";
-        String cpsc913 = "913";
-
         //Don't touch CPSC 813 and CPSC 913
-        if((currentAssign.assigned.contains(cpsc813)) || (currentAssign.assigned.contains(cpsc913))){
+        if((current.course == 813) || (current.course == 913)){
             return false;
         }
 
         return true;
     }
 
-    public boolean secondValidTest(Assignment currentAssign, Problem selectedProblem, String swap1){
-        String current = currentAssign.assigned;
-        String[] swapSplit = swap1.split("\\s+");
+    public boolean secondValidTest(Assignment currentAssign, Problem selectedProblem, Course swap1){
+        Course current = currentAssign.assigned;
 
         //Don't move classes in the partial assignment
-        Collection<Assignment> partialAssign = selectedProblem.problem_set.partial_assignments;
+        Collection<Pair<Time, Course>> partialAssign = selectedProblem.problem_set.partial_assignments;
 
-        for(Assignment partial : partialAssign){
-            if(current == partial.assigned){
+        for(Pair<Time, Course> partial : partialAssign){
+            Course pairCourse = partial.getValue();
+
+            if(current == pairCourse){
                 return false;
             }
         }
 
         //Don't touch CPSC 813 and CPSC 913
-        String cpsc813 = "813";
-        String cpsc913 = "913";
-
-        if((current.contains(cpsc813)) || (current.contains(cpsc913))){
+        if((current.course == 813) || (current.course == 913)){
             return false;
         }
 
         //Make sure classes aren't being moved into an unwanted slot
-        Collection<Assignment> unwantedAssign = selectedProblem.problem_set.unwanted;
+        Collection<Pair<Time, Course>> unwantedAssign = selectedProblem.problem_set.unwanted;
 
-        for(Assignment unwant : unwantedAssign){
-            if(swap1 == unwant.assigned){
+        for(Pair<Time, Course> unwant : unwantedAssign){
+            Course pairCourse = unwant.getValue();
+
+            if(swap1 == pairCourse){
                 return false;
             }
         }
 
         //If swap1 is a course, select another course. If it's a lab, select another lab.
         //Make sure a course does not move into a slot with a lab for that course ?????????
-        if((!swap1.contains("TUT")) || (!swap1.contains("LAB"))){
-            if((current.contains("TUT")) || (current.contains("LAB"))){
+        if(swap1.lab == 0){
+            if(current.lab >= 1){
                 return false;
             }
 
-            String swapNum = swapSplit[1];
-
-            Time currentTime = currentAssign.time;
+            Time currentTime = currentAssign.slot.time;
 
             for(Assignment comp : selectedProblem.assignments){
-                if((comp.time.day == currentTime.day) && (comp.assigned.contains(swapNum))){
-                    if((comp.assigned.contains("TUT")) || (comp.assigned.contains("LAB"))){
+                if((currentAssign.slot.overlap(comp.slot)) && (comp.assigned.course == swap1.course)){
+                    if(comp.assigned.lab >= 1){
                         return false;
                     }
                 }
@@ -230,18 +228,16 @@ public class SetBasedSearch {
         }
 
         //Make sure a lab does not move into a slot with a course for that lab ??????????
-        else if((swap1.contains("TUT")) || (swap1.contains("LAB"))){
-            if((!current.contains("TUT")) || (!current.contains("LAB"))){
+        else if(swap1.lab >= 1){
+            if(current.lab == 0){
                 return false;
             }
 
-            String swapNum = swapSplit[1];
-
-            Time currentTime = currentAssign.time;
+            Time currentTime = currentAssign.slot.time;
 
             for(Assignment comp : selectedProblem.assignments){
-                if((comp.time.day == currentTime.day) && (comp.assigned.contains(swapNum))){
-                    if((!comp.assigned.contains("TUT")) || (!comp.assigned.contains("LAB"))){
+                if((currentAssign.slot.overlap(comp.slot)) && (comp.assigned.course == swap1.course)){
+                    if(comp.assigned.lab == 0){
                         return false;
                     }
                 }
@@ -249,20 +245,18 @@ public class SetBasedSearch {
         }
 
         //If swap1 is a LEC 9 course, swap2 must be an evening course
-        if((swapSplit[2] == "LEC") && (swapSplit[3].contains("9"))){
-            if(currentAssign.time.hour < 18){
+        if(swap1.section == 9){
+            if(currentAssign.slot.time.hour < 18){
                 return false;
             }
         }
 
         //Make sure a 500 level course does not move into a slot with another 500 level course
-        if(swapSplit[1].charAt(0) == '5'){
+        if((swap1.course >= 500) && (swap1.lab == 0)){
             for(Assignment comp : selectedProblem.assignments){
-                if((comp.time.day == currentAssign.time.day)){
+                if((comp.slot.time.hour == currentAssign.slot.time.hour)){
 
-                    String[] currentSplit = currentAssign.assigned.split("\\s+");
-
-                    if(currentSplit[1].charAt(0) == '5'){
+                    if((current.course >= 500) && (current.lab == 0)){
                         return false;
                     }
                 }
@@ -270,8 +264,8 @@ public class SetBasedSearch {
         }
 
         //If slot1 is CPSC 313 or CPSC 413, don't swap them with 18:00 courses
-        if((swap1.contains("313")) || (swap1.contains("413"))){
-            if(currentAssign.time.hour == 18){
+        if((swap1.course == 313) || (swap1.course == 413)){
+            if(currentAssign.slot.time.hour == 18){
                 return false;
             }
         }

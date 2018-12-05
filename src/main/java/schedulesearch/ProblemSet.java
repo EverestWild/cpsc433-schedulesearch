@@ -31,10 +31,10 @@ public class ProblemSet {
     public Collection<Course> courses = new ArrayList<Course>();
     public Collection<Course> labs = new ArrayList<Course>();
     public Collection<Pair<Course, Course>> not_compatible = new ArrayList<Pair<Course, Course>>();
-    public Collection<Assignment> unwanted = new ArrayList<Assignment>();
+    public Collection<Pair<Time, Course>> unwanted = new ArrayList<Pair<Time, Course>>();
     public Collection<Pair<Assignment, Integer>> preferences = new ArrayList<Pair<Assignment, Integer>>();
     public Collection<Pair<Course, Course>> pairs = new ArrayList<Pair<Course, Course>>();
-    public Collection<Assignment> partial_assignments = new ArrayList<Assignment>();
+    public Collection<Pair<Time, Course>> partial_assignments = new ArrayList<Pair<Time, Course>>();
 
     // =========================================================================
     //  B. Constructors
@@ -235,8 +235,9 @@ public class ProblemSet {
     private void parseUnwanted(String[] elements) throws ParseException {
         if (elements.length == 3) {
             Time time = Time.parse(elements[1], elements[2]);
+	    Course course = new Course(elements[0]);
             try {
-                unwanted.add(new Assignment(time, new Course(elements[0])));
+                unwanted.add(new Pair<Time, Course>(time, course));
             }
             catch (IllegalArgumentException e) {
                 throw new ParseException(e, line_no);
@@ -251,8 +252,9 @@ public class ProblemSet {
         if (elements.length == 4) {
             Time time = Time.parse(elements[0], elements[1]);
             int value = Integer.parseInt(elements[3]);
+	    Slot slot = new Slot(time, 0, 0, 0);
             try {
-                preferences.add(new Pair<Assignment, Integer>(new Assignment(time, new Course(elements[2])), value));
+                preferences.add(new Pair<Assignment, Integer>(new Assignment(slot, new Course(elements[2])), value));
             }
             catch (IllegalArgumentException e) {
                 throw new ParseException(e, line_no);
@@ -280,8 +282,9 @@ public class ProblemSet {
     private void parsePartialAssignments(String[] elements) throws ParseException {
         if (elements.length == 3) {
             Time time = Time.parse(elements[1], elements[2]);
+	    Course course = new Course(elements[0]);
             try {
-                partial_assignments.add(new Assignment(time, new Course(elements[0])));
+                partial_assignments.add(new Pair<Time, Course>(time, course));
             }
             catch (IllegalArgumentException e) {
                 throw new ParseException(e, line_no);
@@ -299,18 +302,22 @@ public class ProblemSet {
         return lab_slots;
     }
 
-    public Slot searchByTime(Time time, Collection<Slot> slot_list) {
-        for(int i = 0; i < slot_list.size(); i++) {
-            Slot s = slot_list.iterator().next();
-            if(s.time.day == time.day) {
-                if(s.time.hour == time.hour) {
-                    if(s.time.minute == time.minute) {
-                        return s;
-                    }
-                }
+    public Slot getCourseSlotByTime(Time time) {
+        for (Slot slot : course_slots) {
+            if (slot.time == time) {
+                return slot;
             }
         }
-        Slot slot = new Slot(time, 0, 0, 0);
-        return slot;
+        return null;
     }
+
+    public Slot getLabSlotByTime(Time time) {
+        for (Slot slot : lab_slots) {
+            if (slot.time == time) {
+                return slot;
+            }
+        }
+        return null;
+    }
+
 }
