@@ -73,7 +73,7 @@ public class Problem {
         // TODO - this probably needs to be fixed, as the strings in the pair
         // are class names, not lecture/lab section names like the string in
         // Assignment
-        for (Pair<String, String> pair : problem_set.pairs) {
+        for (Pair<Course, Course> pair : problem_set.pairs) {
             Assignment assign_a = null;
             Assignment assign_b = null;
             for (Assignment assign : assignments) {

@@ -28,12 +28,12 @@ public class ProblemSet {
     public String name = null;
     public Collection<Slot> course_slots = new ArrayList<Slot>();
     public Collection<Slot> lab_slots = new ArrayList<Slot>();
-    public Collection<String> courses = new ArrayList<String>();
-    public Collection<String> labs = new ArrayList<String>();
-    public Collection<Pair<String, String>> not_compatible = new ArrayList<Pair<String, String>>();
+    public Collection<Course> courses = new ArrayList<Course>();
+    public Collection<Course> labs = new ArrayList<Course>();
+    public Collection<Pair<Course, Course>> not_compatible = new ArrayList<Pair<Course, Course>>();
     public Collection<Assignment> unwanted = new ArrayList<Assignment>();
     public Collection<Pair<Assignment, Integer>> preferences = new ArrayList<Pair<Assignment, Integer>>();
-    public Collection<Pair<String, String>> pairs = new ArrayList<Pair<String, String>>();
+    public Collection<Pair<Course, Course>> pairs = new ArrayList<Pair<Course, Course>>();
     public Collection<Assignment> partial_assignments = new ArrayList<Assignment>();
 
     // =========================================================================
@@ -157,7 +157,12 @@ public class ProblemSet {
                 Time time = Time.parse(elements[0], elements[1]);
                 int course_max = Integer.parseInt(elements[2]);
                 int course_min = Integer.parseInt(elements[3]);
-                course_slots.add(new Slot(time, course_max, course_min));
+                if(time.day.equals(Time.Day.Tuesday)) {
+                    course_slots.add(new Slot(time, course_max, course_min, 90));
+                }
+                else {
+                    course_slots.add(new Slot(time, course_max, course_min, 60));
+                }
             }
             catch (NumberFormatException e) {
                 throw new ParseException("Invalid arguments given for course slot", e, line_no);
@@ -174,7 +179,7 @@ public class ProblemSet {
                 Time time = Time.parse(elements[0], elements[1]);
                 int lab_max = Integer.parseInt(elements[2]);
                 int lab_min = Integer.parseInt(elements[3]);
-                lab_slots.add(new Slot(time, lab_max, lab_min));
+                lab_slots.add(new Slot(time, lab_max, lab_min, 60));
             }
             catch (NumberFormatException e) {
                 throw new ParseException("Invalid arguments given for lab slot", e, line_no);
@@ -187,7 +192,12 @@ public class ProblemSet {
 
     private void parseCourses(String[] elements) throws ParseException {
         if (elements.length == 1) {
-            courses.add(elements[0]);
+            try {
+                courses.add(new Course(elements[0]));
+            }
+            catch (IllegalArgumentException e) {
+                throw new ParseException(e, line_no);
+            }
         }
         else {
             throw new ParseException("Wrong number of elements for a course", line_no);
@@ -196,7 +206,12 @@ public class ProblemSet {
 
     private void parseLabs(String[] elements) throws ParseException {
         if (elements.length == 1) {
-            labs.add(elements[0]);
+            try {
+                labs.add(new Course(elements[0]));
+            }
+            catch (IllegalArgumentException e) {
+                throw new ParseException(e, line_no);
+            }
         }
         else {
             throw new ParseException("Wrong number of elements for a lab", line_no);
@@ -205,8 +220,12 @@ public class ProblemSet {
 
     private void parseNotCompatible(String[] elements) throws ParseException {
         if (elements.length == 2) {
-            // TODO - parse these into identifiers instead of leaving them as strings
-            not_compatible.add(new Pair<String, String>(elements[0], elements[1]));
+            try {
+                not_compatible.add(new Pair<Course, Course>(new Course(elements[0]), new Course(elements[1])));
+            }
+            catch (IllegalArgumentException e) {
+                throw new ParseException(e, line_no);
+            }
         }
         else {
             throw new ParseException("Wrong number of elements for a 'not compatible' statement", line_no);
@@ -216,7 +235,12 @@ public class ProblemSet {
     private void parseUnwanted(String[] elements) throws ParseException {
         if (elements.length == 3) {
             Time time = Time.parse(elements[1], elements[2]);
-            unwanted.add(new Assignment(time, elements[0]));
+            try {
+                unwanted.add(new Assignment(time, new Course(elements[0])));
+            }
+            catch (IllegalArgumentException e) {
+                throw new ParseException(e, line_no);
+            }
         }
         else {
             throw new ParseException("Wrong number of elements for an 'unwanted' statement", line_no);
@@ -227,7 +251,12 @@ public class ProblemSet {
         if (elements.length == 4) {
             Time time = Time.parse(elements[0], elements[1]);
             int value = Integer.parseInt(elements[3]);
-            preferences.add(new Pair<Assignment, Integer>(new Assignment(time, elements[2]), value));
+            try {
+                preferences.add(new Pair<Assignment, Integer>(new Assignment(time, new Course(elements[2])), value));
+            }
+            catch (IllegalArgumentException e) {
+                throw new ParseException(e, line_no);
+            }
         }
         else {
             throw new ParseException("Wrong number of elements for a 'preference' statement", line_no);
@@ -236,8 +265,12 @@ public class ProblemSet {
 
     private void parsePair(String[] elements) throws ParseException {
         if (elements.length == 2) {
-            // TODO - parse these into identifiers instead of leaving them as strings
-            pairs.add(new Pair<String, String>(elements[0], elements[1]));
+            try {
+                pairs.add(new Pair<Course, Course>(new Course(elements[0]), new Course(elements[1])));
+            }
+            catch (IllegalArgumentException e) {
+                throw new ParseException(e, line_no);
+            }
         }
         else {
             throw new ParseException("Wrong number of elements for a 'pair' statement", line_no);
@@ -247,11 +280,37 @@ public class ProblemSet {
     private void parsePartialAssignments(String[] elements) throws ParseException {
         if (elements.length == 3) {
             Time time = Time.parse(elements[1], elements[2]);
-            partial_assignments.add(new Assignment(time, elements[0]));
+            try {
+                partial_assignments.add(new Assignment(time, new Course(elements[0])));
+            }
+            catch (IllegalArgumentException e) {
+                throw new ParseException(e, line_no);
+            }
         }
         else {
             throw new ParseException("Wrong number of elements for a 'partial assignments' statement", line_no);
         }
     }
 
+    public Collection<Slot> getCourseList(){
+        return course_slots;
+    }
+    public Collection<Slot> getLabList(){
+        return lab_slots;
+    }
+
+    public Slot searchByTime(Time time, Collection<Slot> slot_list) {
+        for(int i = 0; i < slot_list.size(); i++) {
+            Slot s = slot_list.iterator().next();
+            if(s.time.day == time.day) {
+                if(s.time.hour == time.hour) {
+                    if(s.time.minute == time.minute) {
+                        return s;
+                    }
+                }
+            }
+        }
+        Slot slot = new Slot(time, 0, 0, 0);
+        return slot;
+    }
 }
