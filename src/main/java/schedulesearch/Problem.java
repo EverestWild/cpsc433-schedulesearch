@@ -22,9 +22,12 @@ public class Problem {
         assignments.addAll(other.assignments);
     }
 
-    public int eval() {
+    public int eval(int multi1, int multi2, int multi3, int multi4) {
+
         // TODO - multipliers
-        return evalMinFilled() + evalPref() + evalPair() + evalSecDiff();
+
+        return (multi1*evalMinFilled()) + (multi2*evalPref()) + (multi3*evalPair()) + (multi4*evalSecDiff());
+
     }
 
     public int evalMinFilled() {
@@ -32,8 +35,7 @@ public class Problem {
         for (Slot slot : problem_set.course_slots) {
             int filled = 0;
             for (Assignment assign : assignments) {
-                // TODO - also test that this assignment is for a course
-                if (assign.slot.time == slot.time) {
+                if ((assign.slot.time == slot.time) && (assign.assigned.lab == 0)) {
                     ++filled;
                 }
             }
@@ -44,8 +46,7 @@ public class Problem {
         for (Slot slot : problem_set.lab_slots) {
             int filled = 0;
             for (Assignment assign : assignments) {
-                // TODO - also test that this assignment is for a lab
-                if (assign.slot.time == slot.time) {
+                if ((assign.slot.time == slot.time) && (assign.assigned.lab >= 1)) {
                     ++filled;
                 }
             }

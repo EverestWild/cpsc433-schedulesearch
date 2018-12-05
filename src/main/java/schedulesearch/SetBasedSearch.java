@@ -14,6 +14,10 @@ public class SetBasedSearch {
     public SetBasedSearch(ProblemSet problem_set) {
         this.problem_set = problem_set;
         // TODO - create or-tree and populate the problem collection
+	OrTreeSearch OrSearch = new OrTreeSearch(problem_set);
+	while(problems.size < 10){
+	    problems.add(OrSearch.run());
+	}
     }
 
     public boolean step() {
@@ -27,7 +31,7 @@ public class SetBasedSearch {
         for(int i = 0; i < problemSize; i++){
             currentProblem = problems.get(i);
 
-            eval = currentProblem.eval();
+            eval = currentProblem.eval(multi1, multi2, multi3, multi4); // added the parameters
 
             if(eval == 0){
                 return false;

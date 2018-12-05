@@ -5,15 +5,17 @@ import java.util.regex.Pattern;
 
 public class Course{
 
+    public String name;
     public int course;
     public int section;
     public int lab;
 
-    static private final Pattern pattern = Pattern.compile("CPSC (?<course>\\d+)(?: LEC (?<section>\\d+))?(?: (?:LAB|TUT) (?<lab>\\d+))?", Pattern.CASE_INSENSITIVE);
+    static private final Pattern pattern = Pattern.compile("(?<name>\\w+) (?<course>\\d+)(?: LEC (?<section>\\d+))?(?: (?:LAB|TUT) (?<lab>\\d+))?", Pattern.CASE_INSENSITIVE);
 
     public Course(String str) throws IllegalArgumentException {
         Matcher matcher = pattern.matcher(str);
         if (matcher.matches()) {
+	    name = matcher.group("name");
             course = Integer.parseInt(matcher.group("course"));
             if (matcher.group("section") != null) {
                 section = Integer.parseInt(matcher.group("section"));
@@ -34,6 +36,7 @@ public class Course{
     }
 
     public Course(Course other) {
+	name = other.name;
         course = other.course;
         section = other.section;
         lab = other.lab;
@@ -46,7 +49,7 @@ public class Course{
         }
         else if (o != null && o instanceof Course) {
             Course c = (Course) o;
-            return course == c.course && section == c.section && lab == c.lab;
+            return name == c.name && course == c.course && section == c.section && lab == c.lab;
         }
         else {
             return false;
